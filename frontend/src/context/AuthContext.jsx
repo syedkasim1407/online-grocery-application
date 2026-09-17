@@ -1,43 +1,56 @@
-import { createContext, useContext, useState } from "react";
+import {
+  createContext,
+  useState,
+} from "react";
 
-const AuthContext = createContext();
+import api from "../utils/api";
+import {
+  saveAuthData,
+  clearAuthData,
+  getToken,
+  getEmail,
+  getRole,
+} from "../utils/auth";
+
+export const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
 
-  const login = (email, password) => {
-    // Mock customer
-    if (
-      email === "customer@gmail.com" &&
-      password === "123456"
-    ) 
-    {
-      const loggedInUser = 
-      {
-        id: 1,
-        name: "John",
-        email: email,
-        role: "CUSTOMER",
-      };
+  // Restore user directly from localStorage
+  const [user, setUser] = useState(() => {
 
-      setUser(loggedInUser);
+    const token = getToken();
+    const email = getEmail();
+    const role = getRole();
 
+    if (token && email && role) {
       return {
-        success: true,
-        user: loggedInUser,
+        email,
+        role,
       };
     }
 
-    // Mock admin
-    if (
-      email === "admin@gmail.com" &&
-      password === "admin123"
-    ) {
+    return null;
+  });
+
+  // ================= LOGIN =================
+
+  const login = async (email, password) => {
+
+    try {
+
+      const response = await api.post("/user/login", {
+        email,
+        password,
+      });
+
+      const data = response.data;
+
+      saveAuthData(data);
+
       const loggedInUser = {
-        id: 2,
-        name: "Admin",
-        email: email,
-        role: "ADMIN",
+        email: data.email,
+        role: data.role,
       };
 
       setUser(loggedInUser);
@@ -46,32 +59,61 @@ export function AuthProvider({ children }) {
         success: true,
         user: loggedInUser,
       };
-    }
 
-    return {
-      success: false,
-      message: "Invalid email or password",
-    };
+    } catch (error) {
+
+      console.error("Login error:", error);
+
+      let message = "Invalid email or password";
+
+      if (error.response?.data?.message) {
+        message = error.response.data.message;
+      }
+
+      return {
+        success: false,
+        message,
+      };
+    }
   };
+
+  // ================= REGISTER =================
+
+  const register = async (userData) => {
+
+    try {
+
+      const response = await api.post("/user", userData);
+
+      return {
+        success: true,
+        user: response.data,
+      };
+
+    } catch (error) {
+
+      console.error("Register error:", error);
+
+      let message = "Registration failed";
+
+      if (error.response?.data?.message) {
+        message = error.response.data.message;
+      }
+
+      return {
+        success: false,
+        message,
+      };
+    }
+  };
+
+  // ================= LOGOUT =================
 
   const logout = () => {
+
+    clearAuthData();
+
     setUser(null);
-  };
-
-  const register = (userData) => {
-    const newUser = {
-      id: Date.now(),
-      name: userData.name,
-      email: userData.email,
-      role: "CUSTOMER",
-    };
-
-    setUser(newUser);
-
-    return {
-      success: true,
-      user: newUser,
-    };
   };
 
   return (
@@ -87,8 +129,4 @@ export function AuthProvider({ children }) {
       {children}
     </AuthContext.Provider>
   );
-}
-
-export function useAuth() {
-  return useContext(AuthContext);
 }

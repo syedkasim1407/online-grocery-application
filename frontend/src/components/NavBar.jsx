@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-
+import { useAuth } from "../hooks/useAuth";
 function NavBar() {
   const { user, isAuthenticated, logout } = useAuth();
 
@@ -10,6 +9,7 @@ function NavBar() {
       <div className="mx-auto flex max-w-7xl items-center justify-between">
 
         {/* Logo */}
+
         <Link
           to="/"
           className="text-2xl font-bold"
@@ -17,16 +17,9 @@ function NavBar() {
           Online Grocery
         </Link>
 
-        {/* Search */}
-        <div>
-          <input
-            type="text"
-            placeholder="Search"
-            className="h-10 w-48 rounded-md bg-white p-2 text-black outline-none"
-          />
-        </div>
-
+        
         {/* Navigation */}
+
         <div className="flex items-center gap-5">
 
           <Link
@@ -50,7 +43,6 @@ function NavBar() {
             Products
           </Link>
 
-          {/* Authentication */}
           {!isAuthenticated ? (
             <>
               <Link
@@ -69,16 +61,18 @@ function NavBar() {
             </>
           ) : (
             <>
-              {/* Customer */}
-              <div className="p-2 border rounded-xl shadow-md transition hover:-translate-y-1 shadow-lg">
-              {user.role === "CUSTOMER" && (
+              {/* Logged in user */}
+
+              <div className="rounded-xl border p-2 shadow-md">
+
                 <span className="font-medium">
-                  Hi, {user.name}
+                  Hi, {user.email}
                 </span>
-              )}
+
               </div>
 
               {/* Admin */}
+
               {user.role === "ADMIN" && (
                 <Link
                   to="/admin"
@@ -86,7 +80,18 @@ function NavBar() {
                 >
                   Admin
                 </Link>
-                  )}
+              )}
+
+              {/* Customer Orders */}
+
+              {user.role === "CUSTOMER" && (
+                <Link
+                  to="/orders"
+                  className="hover:text-green-200"
+                >
+                  Orders
+                </Link>
+              )}
 
               <button
                 onClick={logout}
@@ -94,10 +99,12 @@ function NavBar() {
               >
                 Logout
               </button>
+
             </>
           )}
 
           {/* Cart */}
+
           {user?.role === "CUSTOMER" && (
             <Link
               to="/cart"

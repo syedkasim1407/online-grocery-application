@@ -1,31 +1,72 @@
+import { useEffect, useState } from "react";
+
 import CategoryList from "../components/CategoryList";
-import { useAdmin } from "../context/AdminContext";
+import { getCategories } from "../services/categoryService";
 
 function Categories() {
-    const { categories } = useAdmin();
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        setLoading(true);
+        setError("");
+
+        const data = await getCategories();
+
+        setCategories(data);
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+        setError("Failed to load categories");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <p className="text-gray-600">Loading categories...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <p className="text-red-600">{error}</p>
+      </div>
+    );
+  }
+
   return (
-    <main className="mx-auto bg-gray-50">
-        <section className='bg-green-50 py-1'>
-            <div className="max-w-7xl text-center py-5">
-                <p className="font-semibold text-xl text-green-600">
-                    Explore our store
-                </p>
-                <h1 className="mt-4 text-4xl font-bold text-gray-900">
-                    Shop By Category
-                </h1> 
-                <p className="mx-auto mt-7 max-w-2xl text-xl text-gray-600">
-                    Browse our wide range of fresh groceries and everyday essentials.
-                </p>
+    <main className="px-6 py-12">
+      <div className="mx-auto max-w-7xl">
 
-            </div>
-        </section>
-        {/*CategoryList*/}
-        <section>
-            <div className="mx-auto max-w-7xl my-6">
-                <CategoryList categories={categories}/>
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">
+            Categories
+          </h1>
 
-            </div>
-        </section>
+          <p className="mt-2 text-gray-600">
+            Browse groceries by category
+          </p>
+        </div>
+
+        {categories.length === 0 ? (
+          <p className="text-gray-600">
+            No categories available.
+          </p>
+        ) : (
+          <CategoryList categories={categories} />
+        )}
+
+      </div>
     </main>
   );
 }

@@ -1,129 +1,376 @@
-import { createContext, useContext, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 
-import { products as initialProducts } from "../data/products";
-import { categories as initialCategories } from "../data/categories";
-import { users as initialUsers } from "../data/users";
+import {
+  getProducts,
+  createProduct,
+  updateProduct,
+  deleteProduct,
+} from "../services/productService";
 
-const AdminContext = createContext();
+import {
+  getCategories,
+  createCategory,
+  updateCategory,
+  deleteCategory,
+} from "../services/categoryService";
+
+export const AdminContext = createContext(null);
 
 export function AdminProvider({ children }) {
-  const [products, setProducts] = useState(initialProducts);
-  const [categories, setCategories] = useState(initialCategories);
-  const [users, setUsers] = useState(initialUsers);
 
-  // ================= PRODUCTS =================
+  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
 
-  const addProduct = (product) => {
-    const newProduct = {
-      ...product,
-      id: Date.now(),
-    };
+  const [loading, setLoading] = useState(true);
 
-    setProducts((currentProducts) => [
-      ...currentProducts,
-      newProduct,
-    ]);
+
+  // =====================================================
+  // FETCH PRODUCTS + CATEGORIES
+  // =====================================================
+
+  const fetchAdminData = async () => {
+
+    try {
+
+      setLoading(true);
+
+      const [productData, categoryData] =
+        await Promise.all([
+          getProducts(),
+          getCategories(),
+        ]);
+
+      setProducts(productData);
+      setCategories(categoryData);
+
+    } catch (error) {
+
+      console.error(
+        "Error loading admin data:",
+        error
+      );
+
+    } finally {
+
+      setLoading(false);
+
+    }
+
   };
 
-  const updateProduct = (updatedProduct) => {
-    setProducts((currentProducts) =>
-      currentProducts.map((product) =>
-        product.id === updatedProduct.id
-          ? updatedProduct
-          : product
-      )
-    );
+
+  // =====================================================
+  // INITIAL LOAD
+  // =====================================================
+
+  useEffect(() => {
+
+    fetchAdminData();
+
+  }, []);
+
+
+  // =====================================================
+  // ADD PRODUCT
+  // =====================================================
+
+  const addProduct = async (
+    product,
+    categoryId
+  ) => {
+
+    try {
+
+      const newProduct =
+        await createProduct(
+          product,
+          categoryId
+        );
+
+      setProducts((current) => [
+        ...current,
+        newProduct,
+      ]);
+
+      return {
+        success: true,
+      };
+
+    } catch (error) {
+
+      console.error(
+        "Error adding product:",
+        error
+      );
+
+      return {
+        success: false,
+        message:
+          error.response?.data?.message ||
+          "Failed to add product",
+      };
+
+    }
+
   };
 
-  const deleteProduct = (productId) => {
-    setProducts((currentProducts) =>
-      currentProducts.filter(
-        (product) => product.id !== productId
-      )
-    );
+
+  // =====================================================
+  // UPDATE PRODUCT
+  // =====================================================
+
+  const handleUpdateProduct = async (
+    productId,
+    product
+  ) => {
+
+    try {
+
+      const updatedProduct =
+        await updateProduct(
+          productId,
+          product
+        );
+
+      setProducts((current) =>
+        current.map((item) =>
+          item.id === productId
+            ? updatedProduct
+            : item
+        )
+      );
+
+      return {
+        success: true,
+      };
+
+    } catch (error) {
+
+      console.error(
+        "Error updating product:",
+        error
+      );
+
+      return {
+        success: false,
+        message:
+          error.response?.data?.message ||
+          "Failed to update product",
+      };
+
+    }
+
   };
 
-  // ================= CATEGORIES =================
 
-  const addCategory = (category) => {
-    const newCategory = {
-      ...category,
-      id: Date.now(),
-    };
+  // =====================================================
+  // DELETE PRODUCT
+  // =====================================================
 
-    setCategories((currentCategories) => [
-      ...currentCategories,
-      newCategory,
-    ]);
+  const handleDeleteProduct = async (
+    productId
+  ) => {
+
+    try {
+
+      await deleteProduct(productId);
+
+      setProducts((current) =>
+        current.filter(
+          (product) =>
+            product.id !== productId
+        )
+      );
+
+      return {
+        success: true,
+      };
+
+    } catch (error) {
+
+      console.error(
+        "Error deleting product:",
+        error
+      );
+
+      return {
+        success: false,
+        message:
+          error.response?.data?.message ||
+          "Failed to delete product",
+      };
+
+    }
+
   };
 
-  const updateCategory = (updatedCategory) => {
-    setCategories((currentCategories) =>
-      currentCategories.map((category) =>
-        category.id === updatedCategory.id
-          ? updatedCategory
-          : category
-      )
-    );
+
+  // =====================================================
+  // ADD CATEGORY
+  // =====================================================
+
+  const addCategory = async (category) => {
+
+    try {
+
+      const newCategory =
+        await createCategory(category);
+
+      setCategories((current) => [
+        ...current,
+        newCategory,
+      ]);
+
+      return {
+        success: true,
+      };
+
+    } catch (error) {
+
+      console.error(
+        "Error adding category:",
+        error
+      );
+
+      return {
+        success: false,
+        message:
+          error.response?.data?.message ||
+          "Failed to add category",
+      };
+
+    }
+
   };
 
-  const deleteCategory = (categoryName) => {
-    setCategories((currentCategories) =>
-      currentCategories.filter(
-        (category) => category.name !== categoryName
-      )
-    );
+
+  // =====================================================
+  // UPDATE CATEGORY
+  // =====================================================
+
+  const handleUpdateCategory = async (
+    categoryId,
+    category
+  ) => {
+
+    try {
+
+      const updatedCategory =
+        await updateCategory(
+          categoryId,
+          category
+        );
+
+      setCategories((current) =>
+        current.map((item) =>
+          item.id === categoryId
+            ? updatedCategory
+            : item
+        )
+      );
+
+      return {
+        success: true,
+      };
+
+    } catch (error) {
+
+      console.error(
+        "Error updating category:",
+        error
+      );
+
+      return {
+        success: false,
+        message:
+          error.response?.data?.message ||
+          "Failed to update category",
+      };
+
+    }
+
   };
 
-  // ================= USERS =================
 
-  const deleteUser = (userId) => {
-    setUsers((currentUsers) =>
-      currentUsers.filter(
-        (user) => user.id !== userId
-      )
-    );
+  // =====================================================
+  // DELETE CATEGORY
+  // =====================================================
+
+  const handleDeleteCategory = async (
+    categoryId
+  ) => {
+
+    try {
+
+      await deleteCategory(categoryId);
+
+      setCategories((current) =>
+        current.filter(
+          (category) =>
+            category.id !== categoryId
+        )
+      );
+
+      return {
+        success: true,
+      };
+
+    } catch (error) {
+
+      console.error(
+        "Error deleting category:",
+        error
+      );
+
+      return {
+        success: false,
+        message:
+          error.response?.data?.message ||
+          "Failed to delete category",
+      };
+
+    }
+
   };
 
-  const toggleUserStatus = (userId) => {
-    setUsers((currentUsers) =>
-      currentUsers.map((user) =>
-        user.id === userId
-          ? {
-              ...user,
-              status:
-                user.status === "ACTIVE"
-                  ? "INACTIVE"
-                  : "ACTIVE",
-            }
-          : user
-      )
-    );
-  };
 
   return (
     <AdminContext.Provider
       value={{
         products,
         categories,
-        users,
+        loading,
 
         addProduct,
-        updateProduct,
-        deleteProduct,
+
+        updateProduct:
+          handleUpdateProduct,
+
+        deleteProduct:
+          handleDeleteProduct,
 
         addCategory,
-        updateCategory,
-        deleteCategory,
 
-        deleteUser,
-        toggleUserStatus,
+        updateCategory:
+          handleUpdateCategory,
+
+        deleteCategory:
+          handleDeleteCategory,
+
+        refreshAdminData:
+          fetchAdminData,
       }}
     >
       {children}
     </AdminContext.Provider>
   );
 }
+
 
 export function useAdmin() {
   return useContext(AdminContext);

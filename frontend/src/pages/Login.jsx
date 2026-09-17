@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
 
+import { useAuth } from "../hooks/useAuth";
 function Login() {
   const navigate = useNavigate();
 
@@ -11,13 +11,17 @@ function Login() {
   const [password, setPassword] = useState("");
 
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     setError("");
+    setLoading(true);
 
-    const result = login(email, password);
+    const result = await login(email, password);
+
+    setLoading(false);
 
     if (!result.success) {
       setError(result.message);
@@ -64,6 +68,7 @@ function Login() {
         >
 
           {/* Email */}
+
           <div>
 
             <label className="mb-2 block font-medium text-gray-700">
@@ -82,6 +87,7 @@ function Login() {
           </div>
 
           {/* Password */}
+
           <div>
 
             <label className="mb-2 block font-medium text-gray-700">
@@ -101,9 +107,10 @@ function Login() {
 
           <button
             type="submit"
-            className="w-full rounded-lg bg-green-600 py-3 font-semibold text-white transition hover:bg-green-700"
+            disabled={loading}
+            className="w-full rounded-lg bg-green-600 py-3 font-semibold text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            Login
+            {loading ? "Logging in..." : "Login"}
           </button>
 
         </form>
